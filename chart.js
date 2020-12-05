@@ -2,12 +2,16 @@ const drawChart = async (metric) => {
 	// 1. Access Data
 	const { body } = await api.fetchData();
 	const dataset = (metric) =>
-		body.map((el) => {
-			return {
-				date: el.date,
-				value: el[metric],
-			};
-		});
+		body
+			.map((el) => {
+				return {
+					date: el.date,
+					value: el[metric],
+				};
+			})
+			.slice(2);
+
+	let avg = getSevenDayAvg(dataset(state.current));
 
 	// 2. Create Chart Dimensions
 	const dimensions = {
@@ -92,12 +96,28 @@ const drawChart = async (metric) => {
 	const lineGenerator = d3
 		.line()
 		.x((d) => xScale(xAccessor(d)))
-		.y((d) => yScale(yAccessor(d)));
+		.y((d) => yScale(yAccessor(d)))
+		.curve(d3.curveBasis);
+
+	bounds
+		.selectAll(".bar")
+		.data(dataset(metric))
+		.enter()
+		.append("rect")
+		.attr("class", "bar")
+		.attr("x", (d) => xScale(xAccessor(d)))
+		.attr("width", dimensions.boundedWidth / dataset(metric).length)
+		.attr("y", (d) => yScale(yAccessor(d)))
+		.attr("height", (d) => dimensions.boundedHeight - yScale(yAccessor(d)))
+		.style("fill", "#6EE7B7")
+		.style("opacity", "0.2")
+		.attr("stroke-width", "0.5")
+		.attr("stroke", "#1F2937");
 
 	bounds
 		.append("path")
 		.attr("class", "line-data")
-		.attr("d", lineGenerator(dataset("newCasesByPublishDate")))
+		.attr("d", lineGenerator(avg))
 		.attr("fill", "none")
 		.attr("stroke", "#F472B6")
 		.attr("stroke-width", 3);
@@ -119,10 +139,16 @@ const drawChart = async (metric) => {
 		const svg = d3.select("body").transition();
 
 		yScale.domain(d3.extent(dataset(state.current).slice(2), yAccessor)).nice();
-		svg
-			.select(".line-data")
+
+		d3.selectAll(".bar")
+			.data(dataset(metric))
+			.transition()
 			.duration(750)
-			.attr("d", lineGenerator(dataset(state.current).slice(2)));
+			.attr("y", (d) => yScale(yAccessor(d)))
+			.attr("height", (d) => dimensions.boundedHeight - yScale(yAccessor(d)));
+
+		avg = getSevenDayAvg(dataset(state.current));
+		svg.select(".line-data").duration(750).attr("d", lineGenerator(avg));
 
 		svg.select(".y-axis").duration(750).call(yAxisGenerator);
 	}

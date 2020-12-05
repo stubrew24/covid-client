@@ -24,22 +24,6 @@ details.forEach((d) => {
 	buttonsEl.appendChild(newButton);
 });
 
-const updateState = (id) => {
-	state.current = id;
-
-	details.forEach((d) => {
-		if (id === d.id) {
-			document
-				.getElementById(d.id)
-				.classList.add("text-pink-400", "font-semibold");
-		} else {
-			document
-				.getElementById(d.id)
-				.classList.remove("text-pink-400", "font-semibold");
-		}
-	});
-};
-
 const initial = details[0].id;
 updateState(initial);
 drawChart(initial);
