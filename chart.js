@@ -137,20 +137,28 @@ const drawChart = async (metric) => {
 		.y((d) => yScale(yAccessor(d)))
 		.curve(d3.curveBasis);
 
-	bounds
-		.selectAll(".bar")
-		.data(dataset(metric))
-		.enter()
-		.append("rect")
-		.attr("class", "bar")
-		.attr("x", (d) => xScale(xAccessor(d)))
-		.attr("width", dimensions.boundedWidth / dataset(metric).length)
-		.attr("y", (d) => yScale(yAccessor(d)))
-		.attr("height", (d) => dimensions.boundedHeight - yScale(yAccessor(d)))
-		.style("fill", "#6EE7B7")
-		.style("opacity", "0.2")
-		.attr("stroke-width", "0.5")
-		.attr("stroke", "#1F2937");
+	const renderBars = () => {
+		if (state.options.bars) {
+			bounds
+				.selectAll(".bar")
+				.data(dataset(metric))
+				.enter()
+				.append("rect")
+				.attr("class", "bar")
+				.attr("x", (d) => xScale(xAccessor(d)))
+				.attr("width", dimensions.boundedWidth / dataset(metric).length)
+				.attr("y", (d) => yScale(yAccessor(d)))
+				.attr("height", (d) => dimensions.boundedHeight - yScale(yAccessor(d)))
+				.style("fill", "#6EE7B7")
+				.style("opacity", "0.2")
+				.attr("stroke-width", "0.5")
+				.attr("stroke", "#1F2937");
+		} else {
+			bounds.selectAll(".bar").remove();
+		}
+	};
+
+	renderBars();
 
 	bounds
 		.append("path")
@@ -176,6 +184,14 @@ const drawChart = async (metric) => {
 				onClick();
 			});
 	});
+
+	const toggleBars = d3
+		.select("#toggleBars")
+		.node()
+		.addEventListener("click", (e) => {
+			state.options.bars = e.target.checked;
+			renderBars();
+		});
 
 	function onClick() {
 		updateState(keyMetricsAccessor(metric).id);

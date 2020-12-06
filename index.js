@@ -1,6 +1,7 @@
 const state = {
 	current: "newCasesByPublishDate",
 	events: {},
+	options: {},
 };
 
 const api = new API(base, areaType, structure, format);
