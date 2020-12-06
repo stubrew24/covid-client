@@ -10,23 +10,34 @@
 		/>
 		<link rel="preconnect" href="https://fonts.gstatic.com" />
 	</head>
-	<body
-		class="grid lg:grid-cols-5 bg-gray-800 text-green-300 antialiased font-mono"
-	>
-		<aside class="border-r border-blue-100 lg:h-screen text-center p-3">
-			<h3 class="text-lg font-bold border-b py-2 uppercase tracking-wide">
-				Primary Metric
-			</h3>
-			<div id="buttons"></div>
-		</aside>
-		<section class="text-center lg:col-span-4 justify-center">
-			<h2
-				id="title"
-				class="text-lg font-semibold text-center py-2 uppercase tracking-wider"
-			></h2>
-			<div id="wrapper" class="w-full px-6"></div>
-			<fig-caption class="text-sm text-center"></fig-caption>
-		</section>
+
+	<body class="bg-gray-800 text-green-300 antialiased font-mono">
+		<header class="border-b m-2">
+			<h1
+				class="text-2xl font-semibold text-center py-5 uppercase tracking-wider"
+			>
+				Analysis of UK Coronavirus Outbreak
+			</h1>
+		</header>
+		<div class="grid lg:grid-cols-5">
+			<aside class="border-r border-blue-100 lg:h-screen text-center p-3">
+				<h3 class="text-lg font-bold border-b py-2 uppercase tracking-wider">
+					Metrics
+				</h3>
+				<div id="metricsBtnGroup"></div>
+				<h3
+					class="text-lg font-bold border-b py-2 mt-6 uppercase tracking-wider"
+				>
+					Events
+				</h3>
+				<div id="eventsBtnGroup"></div>
+			</aside>
+			<section class="text-center lg:col-span-4 justify-center">
+				<h2 id="title" class="text-lg text-center mt-5 py-2 tracking-wide"></h2>
+				<div id="wrapper" class="w-full px-6"></div>
+				<fig-caption class="text-sm text-center"></fig-caption>
+			</section>
+		</div>
 		<script
 			src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.3.0/d3.min.js"
 			integrity="sha512-wKo55+1oH5DGJ19ScVUHTtcZiqJuSnknSs8CgzzEm1lNftJRDXN/kWpF9Kx+vPam8HBeg53OxS0MYd0+Iz9cjQ=="

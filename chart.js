@@ -46,7 +46,8 @@ const drawChart = async (metric) => {
 		);
 
 	const title = d3.select("#title");
-	title.text("Covid-19 Cases in the UK (Daily)");
+	title.text(keyMetricsAccessor(metric).title);
+
 	const caption = d3.select("fig-caption");
 	caption.text(
 		`Data: data.gov.uk - ${dateFns.format(new Date(), "YYYY-MM-DD")}`
@@ -68,7 +69,6 @@ const drawChart = async (metric) => {
 
 	let yScale = d3.scaleLinear().range([dimensions.boundedHeight, 0]);
 
-	// @ts-ignore
 	yScale.domain(d3.extent(dataset(metric), yAccessor)).nice();
 
 	let yAxisGenerator = d3.axisLeft(yScale);
@@ -93,6 +93,44 @@ const drawChart = async (metric) => {
 		)
 		.call(XAxisGenerator);
 
+	const addEvent = (start, end, color, id) => {
+		const eventStart = xScale(new Date(start));
+		const startEnd = xScale(new Date(end));
+
+		bounds
+			.append("rect")
+			.attr("x", eventStart)
+			.attr("y", 0)
+			.attr("height", dimensions.boundedHeight)
+			.attr("width", startEnd - eventStart)
+			.attr("fill", color)
+			.style("opacity", "0")
+			.attr("class", `${id}-highlight`);
+	};
+
+	events.forEach((ev) => {
+		const checkbox = d3.select(`#${ev.id}`).node();
+
+		addEvent(ev.start, ev.end, ev.hexColor, ev.id);
+
+		checkbox.addEventListener("click", (e) => {
+			state.events[ev.id] = !state.events[ev.id];
+			if (state.events[ev.id]) {
+				checkbox.classList.add(ev.twColor, "text-gray-800");
+				d3.selectAll(`.${ev.id}-highlight`)
+					.transition()
+					.duration(100)
+					.style("opacity", "1");
+			} else {
+				checkbox.classList.remove(ev.twColor, "text-gray-800");
+				d3.selectAll(`.${ev.id}-highlight`)
+					.transition()
+					.duration(100)
+					.style("opacity", "0");
+			}
+		});
+	});
+
 	const lineGenerator = d3
 		.line()
 		.x((d) => xScale(xAccessor(d)))
@@ -116,13 +154,21 @@ const drawChart = async (metric) => {
 
 	bounds
 		.append("path")
+		.attr("class", "line-stroke")
+		.attr("d", lineGenerator(avg))
+		.attr("fill", "none")
+		.attr("stroke", "#1F2937")
+		.attr("stroke-width", 5);
+
+	bounds
+		.append("path")
 		.attr("class", "line-data")
 		.attr("d", lineGenerator(avg))
 		.attr("fill", "none")
 		.attr("stroke", "#F472B6")
 		.attr("stroke-width", 3);
 
-	details.forEach((d) => {
+	keyMetrics.forEach((d) => {
 		d3.select(`#${d.id}`)
 			.node()
 			.addEventListener("click", () => {
@@ -132,9 +178,8 @@ const drawChart = async (metric) => {
 	});
 
 	function onClick() {
-		updateState(detailsAccessor(metric).id);
-		const newTitle = detailsAccessor(metric).title.split(" ");
-		title.text(`COVID-19 ${newTitle[1]} IN THE UK (${newTitle[0]})`);
+		updateState(keyMetricsAccessor(metric).id);
+		title.text(keyMetricsAccessor(metric).title);
 
 		const svg = d3.select("body").transition();
 
@@ -148,6 +193,7 @@ const drawChart = async (metric) => {
 			.attr("height", (d) => dimensions.boundedHeight - yScale(yAccessor(d)));
 
 		avg = getSevenDayAvg(dataset(state.current));
+		svg.select(".line-stroke").duration(750).attr("d", lineGenerator(avg));
 		svg.select(".line-data").duration(750).attr("d", lineGenerator(avg));
 
 		svg.select(".y-axis").duration(750).call(yAxisGenerator);

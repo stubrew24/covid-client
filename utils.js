@@ -1,7 +1,7 @@
 const updateState = (id) => {
 	state.current = id;
 
-	details.forEach((d) => {
+	keyMetrics.forEach((d) => {
 		if (id === d.id) {
 			document
 				.getElementById(d.id)
