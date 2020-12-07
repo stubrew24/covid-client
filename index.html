@@ -19,27 +19,31 @@
 				Analysis of UK Coronavirus Outbreak
 			</h1>
 		</header>
-		<div class="grid lg:grid-cols-5">
-			<aside class="border-r border-blue-100 lg:h-screen text-center p-3">
-				<h3 class="text-lg font-bold border-b py-2 uppercase tracking-wider">
+		<div class="grid lg:grid-cols-5 bottom-0">
+			<aside class="lg:border-r border-blue-100 text-center p-2">
+				<h3
+					id="metrics-title"
+					class="text-lg font-bold border-b py-2 uppercase tracking-wider cursor-pointer"
+				>
 					Metrics
 				</h3>
 				<div id="metricsBtnGroup"></div>
 				<h3
-					class="text-lg font-bold border-b py-2 mt-6 uppercase tracking-wider"
+					id="events-title"
+					class="text-lg font-bold border-b py-2 mt-6 uppercase tracking-wider cursor-pointer"
 				>
 					Events
 				</h3>
-				<div id="eventsBtnGroup"></div>
+				<div id="eventsBtnGroup" class="border-b lg:border-b-0"></div>
 			</aside>
 			<section class="text-center lg:col-span-4 justify-center">
 				<h2
 					id="title"
-					class="text-lg text-center mt-5 py-2 tracking-wide capitalize"
+					class="text-lg text-center mt-5 py-2 tracking-wide capitalize sm:font-regular font-semibold"
 				></h2>
 
 				<div class="text-right mr-6">
-					<label for="toggleBars">Show Bars</label>
+					<label for="toggleBars" class="text-xs md:text-lg">Show Bars</label>
 					<input type="checkbox" name="toggleBars" id="toggleBars" />
 				</div>
 				<div id="wrapper" class="w-full px-6"></div>
@@ -60,6 +64,7 @@
 		<script src="utils.js"></script>
 		<script src="config.js"></script>
 		<script src="chart.js"></script>
+		<script src="app.js"></script>
 		<script src="index.js"></script>
 	</body>
 </html>

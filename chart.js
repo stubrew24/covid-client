@@ -1,20 +1,6 @@
-const drawChart = async (metric) => {
-	// 1. Access Data
-	const { body } = await api.fetchData();
-	const dataset = (metric) =>
-		body
-			.map((el) => {
-				return {
-					date: el.date,
-					value: el[metric],
-				};
-			})
-			.slice(2);
-
-	let avg = getSevenDayAvg(dataset(state.current));
-
-	// 2. Create Chart Dimensions
-	const dimensions = {
+class Chart {
+	data;
+	dimensions = {
 		width: 1000,
 		height: 500,
 		margins: {
@@ -23,195 +9,291 @@ const drawChart = async (metric) => {
 			bottom: 40,
 			left: 60,
 		},
-		boundedWidth: 0,
-		boundedHeight: 0,
+	};
+	svg;
+	bounds;
+	yAccessor;
+	xAccessor;
+	yScale;
+	xScale;
+
+	_metric;
+	_events = {};
+	_options = {
+		bars: false,
+		metricsButtons: true,
+		eventsButtons: true,
 	};
 
-	dimensions.boundedWidth =
-		dimensions.width - dimensions.margins.left - dimensions.margins.right;
-	dimensions.boundedHeight =
-		dimensions.height - dimensions.margins.top - dimensions.margins.bottom;
+	constructor(metric, data) {
+		this.data = data;
+		this._metric = metric.id;
+		this.title = metric.title;
 
-	// 3. Draw Canvas
-	const svg = d3
-		.select("#wrapper")
-		.append("svg")
-		.attr("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+		this.dimensions.boundedWidth =
+			this.dimensions.width -
+			this.dimensions.margins.left -
+			this.dimensions.margins.right;
+		this.dimensions.boundedHeight =
+			this.dimensions.height -
+			this.dimensions.margins.top -
+			this.dimensions.margins.bottom;
 
-	const bounds = svg
-		.append("g")
-		.style(
-			"transform",
-			`translate(${dimensions.margins.left}px, ${dimensions.margins.top}px)`
-		);
+		this.drawCanvas();
+		this.setAccessors();
+		this.renderChart();
+	}
 
-	const title = d3.select("#title");
-	title.text(keyMetricsAccessor(metric).title);
+	get dataset() {
+		const result = this.data.map((el) => ({
+			date: el.date,
+			value: el[this._metric],
+		}));
+		while (result[0].value === null) {
+			result.shift();
+		}
+		return result;
+	}
 
-	const caption = d3.select("fig-caption");
-	caption.text(
-		`Data: data.gov.uk - ${dateFns.format(new Date(), "YYYY-MM-DD")}`
-	);
+	get averageData() {
+		return getSevenDayAvg(this.dataset);
+	}
 
-	bounds.append("g").attr("class", "line");
-	// Set data accessors
+	get lineGenerator() {
+		return d3
+			.line()
+			.x((d) => this.xScale(this.xAccessor(d)))
+			.y((d) => this.yScale(this.yAccessor(d)))
+			.curve(d3.curveBasis);
+	}
 
-	const yAccessor = (d) => d.value || 0;
-	const dateParser = d3.timeParse("%Y-%m-%d");
-	const xAccessor = (d) => dateParser(d.date);
+	set title(title) {
+		const titleEl = d3.select("#title");
+		titleEl.text(title);
+	}
 
-	// Create Scales and Axes
-	const xScale = d3
-		.scaleTime()
-		.domain(d3.extent(dataset(metric), xAccessor))
-		.range([0, dimensions.boundedWidth])
-		.nice();
+	set metric(metric) {
+		this._metric = metric.id;
+		console.log(this.dataset.length);
+		this.title = metric.title;
+		this.createScales();
+		this.updateYAxis();
+		this.updateLine();
+		this.updateBars();
+	}
 
-	let yScale = d3.scaleLinear().range([dimensions.boundedHeight, 0]);
+	set bars(value) {
+		this._options.bars = value;
+		this.drawBars();
+	}
 
-	yScale.domain(d3.extent(dataset(metric), yAccessor)).nice();
+	set events({ key, value }) {
+		this._events[key] = value;
+		this.toggleEvents();
+	}
 
-	let yAxisGenerator = d3.axisLeft(yScale);
+	renderChart() {
+		this.createScales();
+		this.drawAxes();
+		this.drawEvents();
+		this.drawLine();
+		this.drawBars();
+		this.barsToggle();
+		this.toggleEvents();
+		this.toggleMetricsButtons();
+	}
 
-	let yAxis = svg
-		.append("g")
-		.attr("class", "y-axis")
-		.attr(
-			"transform",
-			`translate(${dimensions.margins.left}, ${dimensions.margins.top})`
-		)
-		.call(yAxisGenerator);
+	drawCanvas() {
+		const {
+			width,
+			height,
+			margins,
+			boundedHeight,
+			boundedWidth,
+		} = this.dimensions;
 
-	const XAxisGenerator = d3.axisBottom(xScale);
-	const xAxis = svg
-		.append("g")
-		.attr(
-			"transform",
-			`translate(${dimensions.margins.left}, ${
-				dimensions.boundedHeight + dimensions.margins.top
-			})`
-		)
-		.call(XAxisGenerator);
+		this.svg = d3
+			.select("#wrapper")
+			.append("svg")
+			.attr("viewBox", `0 0 ${width} ${height}`);
+		this.bounds = this.svg
+			.append("g")
+			.style("transform", `translate(${margins.left}px, ${margins.top}px)`);
 
-	const addEvent = (start, end, color, id) => {
-		const eventStart = xScale(new Date(start));
-		const startEnd = xScale(new Date(end));
-
-		bounds
+		this.bounds
 			.append("rect")
-			.attr("x", eventStart)
+			.attr("x", 0)
 			.attr("y", 0)
-			.attr("height", dimensions.boundedHeight)
-			.attr("width", startEnd - eventStart)
-			.attr("fill", color)
-			.style("opacity", "0")
-			.attr("class", `${id}-highlight`);
-	};
+			.attr("height", boundedHeight)
+			.attr("width", boundedWidth)
+			.attr("fill", "#111827")
+			.style("opacity", "0.5");
+	}
 
-	events.forEach((ev) => {
-		const checkbox = d3.select(`#${ev.id}`).node();
+	setAccessors() {
+		const dateParser = d3.timeParse("%Y-%m-%d");
+		this.yAccessor = (d) => d.value || 0;
+		this.xAccessor = (d) => dateParser(d.date);
+	}
 
-		addEvent(ev.start, ev.end, ev.hexColor, ev.id);
+	createScales() {
+		this.xScale = d3
+			.scaleTime()
+			.range([0, this.dimensions.boundedWidth])
+			.domain(d3.extent(this.dataset, this.xAccessor))
+			.nice();
 
-		checkbox.addEventListener("click", (e) => {
-			state.events[ev.id] = !state.events[ev.id];
-			if (state.events[ev.id]) {
-				checkbox.classList.add(ev.twColor, "text-gray-800");
-				d3.selectAll(`.${ev.id}-highlight`)
-					.transition()
-					.duration(100)
-					.style("opacity", "1");
-			} else {
-				checkbox.classList.remove(ev.twColor, "text-gray-800");
-				d3.selectAll(`.${ev.id}-highlight`)
-					.transition()
-					.duration(100)
-					.style("opacity", "0");
-			}
-		});
-	});
+		this.yScale = d3
+			.scaleLinear()
+			.range([this.dimensions.boundedHeight, 0])
+			.domain(d3.extent(this.dataset, this.yAccessor))
+			.nice();
+	}
 
-	const lineGenerator = d3
-		.line()
-		.x((d) => xScale(xAccessor(d)))
-		.y((d) => yScale(yAccessor(d)))
-		.curve(d3.curveBasis);
+	drawAxes() {
+		const yAxisGenerator = d3.axisLeft(this.yScale);
+		const xAxisGenerator = d3.axisBottom(this.xScale);
+		this.svg
+			.append("g")
+			.attr("class", "y-axis")
+			.attr(
+				"transform",
+				`translate(${this.dimensions.margins.left}, ${this.dimensions.margins.top})`
+			)
+			.call(yAxisGenerator);
+		this.svg
+			.append("g")
+			.attr(
+				"transform",
+				`translate(${this.dimensions.margins.left}, ${
+					this.dimensions.boundedHeight + this.dimensions.margins.top
+				})`
+			)
+			.call(xAxisGenerator);
+	}
 
-	const renderBars = () => {
-		if (state.options.bars) {
-			bounds
+	drawLine() {
+		// Shadow line
+		this.bounds
+			.append("path")
+			.attr("class", "line-stroke")
+			.attr("d", this.lineGenerator(this.averageData))
+			.attr("fill", "none")
+			.attr("stroke", "#1A212E")
+			.attr("stroke-width", 5);
+
+		// Main line
+		this.bounds
+			.append("path")
+			.attr("class", "line-data")
+			.attr("d", this.lineGenerator(this.averageData))
+			.attr("fill", "none")
+			.attr("stroke", "#F472B6")
+			.attr("stroke-width", 3);
+	}
+
+	drawBars() {
+		if (this._options.bars) {
+			this.bounds
 				.selectAll(".bar")
-				.data(dataset(metric))
+				.data(this.dataset)
 				.enter()
 				.append("rect")
 				.attr("class", "bar")
-				.attr("x", (d) => xScale(xAccessor(d)))
-				.attr("width", dimensions.boundedWidth / dataset(metric).length)
-				.attr("y", (d) => yScale(yAccessor(d)))
-				.attr("height", (d) => dimensions.boundedHeight - yScale(yAccessor(d)))
+				.attr("x", (d) => this.xScale(this.xAccessor(d)))
+				.attr("width", this.dimensions.boundedWidth / this.dataset.length)
+				.attr("y", (d) => this.yScale(this.yAccessor(d)))
+				.attr(
+					"height",
+					(d) => this.dimensions.boundedHeight - this.yScale(this.yAccessor(d))
+				)
 				.style("fill", "#6EE7B7")
-				.style("opacity", "0.2")
+				.style("opacity", "0.4")
 				.attr("stroke-width", "0.5")
 				.attr("stroke", "#1F2937");
 		} else {
-			bounds.selectAll(".bar").remove();
+			this.bounds.selectAll(".bar").remove();
 		}
-	};
+	}
 
-	renderBars();
-
-	bounds
-		.append("path")
-		.attr("class", "line-stroke")
-		.attr("d", lineGenerator(avg))
-		.attr("fill", "none")
-		.attr("stroke", "#1F2937")
-		.attr("stroke-width", 5);
-
-	bounds
-		.append("path")
-		.attr("class", "line-data")
-		.attr("d", lineGenerator(avg))
-		.attr("fill", "none")
-		.attr("stroke", "#F472B6")
-		.attr("stroke-width", 3);
-
-	keyMetrics.forEach((d) => {
-		d3.select(`#${d.id}`)
-			.node()
-			.addEventListener("click", () => {
-				metric = d.id;
-				onClick();
-			});
-	});
-
-	const toggleBars = d3
-		.select("#toggleBars")
-		.node()
-		.addEventListener("click", (e) => {
-			state.options.bars = e.target.checked;
-			renderBars();
-		});
-
-	function onClick() {
-		updateState(keyMetricsAccessor(metric).id);
-		title.text(keyMetricsAccessor(metric).title);
-
-		const svg = d3.select("body").transition();
-
-		yScale.domain(d3.extent(dataset(state.current).slice(2), yAccessor)).nice();
-
+	updateBars() {
 		d3.selectAll(".bar")
-			.data(dataset(metric))
+			.data(this.dataset)
 			.transition()
 			.duration(750)
-			.attr("y", (d) => yScale(yAccessor(d)))
-			.attr("height", (d) => dimensions.boundedHeight - yScale(yAccessor(d)));
+			.attr("y", (d) => this.yScale(this.yAccessor(d)))
+			.attr(
+				"height",
+				(d) => this.dimensions.boundedHeight - this.yScale(this.yAccessor(d))
+			)
+			.attr("x", (d) => this.xScale(this.xAccessor(d)))
+			.attr("width", this.dimensions.boundedWidth / this.dataset.length);
+	}
 
-		avg = getSevenDayAvg(dataset(state.current));
-		svg.select(".line-stroke").duration(750).attr("d", lineGenerator(avg));
-		svg.select(".line-data").duration(750).attr("d", lineGenerator(avg));
-
+	updateYAxis() {
+		const svg = d3.select("body").transition();
+		const yAxisGenerator = d3.axisLeft(this.yScale);
 		svg.select(".y-axis").duration(750).call(yAxisGenerator);
 	}
-};
+
+	updateLine() {
+		const svg = d3.select("body").transition();
+		svg
+			.select(".line-stroke")
+			.duration(750)
+			.attr("d", this.lineGenerator(this.averageData));
+		svg
+			.select(".line-data")
+			.duration(750)
+			.attr("d", this.lineGenerator(this.averageData));
+	}
+
+	drawEvents() {
+		events.forEach(({ start, end, hexColor, id }) => {
+			const eventStart = this.xScale(new Date(start));
+			const startEnd = this.xScale(new Date(end));
+
+			this.bounds
+				.append("rect")
+				.attr("x", eventStart)
+				.attr("y", 0)
+				.attr("height", this.dimensions.boundedHeight)
+				.attr("width", startEnd - eventStart)
+				.attr("fill", hexColor)
+				.style("opacity", "0")
+				.attr("class", `${id}-highlight`);
+		});
+	}
+
+	toggleEvents() {
+		Object.keys(this._events).forEach((id) => {
+			const event = this._events[id];
+			console.log(event);
+			d3.selectAll(`.${id}-highlight`)
+				.transition()
+				.duration(150)
+				.style("opacity", () => (event ? "1" : "0"));
+		});
+	}
+
+	barsToggle() {
+		d3.select("#toggleBars")
+			.node()
+			.addEventListener("click", (e) => {
+				chart.bars = e.target.checked;
+			});
+	}
+
+	toggleMetricsButtons() {
+		for (const group of ["metrics", "events"]) {
+			d3.select(`#${group}-title`)
+				.node()
+				.addEventListener("click", () => {
+					this._options[`${group}Buttons`] = !this._options[`${group}Buttons`];
+					d3.select(`#${group}BtnGroup`).style("display", () =>
+						this._options[`${group}Buttons`] ? "block" : "none"
+					);
+				});
+		}
+	}
+}

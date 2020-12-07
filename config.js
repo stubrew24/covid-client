@@ -48,6 +48,14 @@ const events = [
 		end: "2020-07-04",
 	},
 	{
+		id: "eatOutToHelpOut",
+		label: "Eat Out To Help Out",
+		hexColor: "#34D399",
+		twColor: "bg-green-400",
+		start: "2020-08-03",
+		end: "2020-08-31",
+	},
+	{
 		id: "secondNationalLockdown",
 		label: "Second National Lockdown",
 		hexColor: "#FBBF24",
