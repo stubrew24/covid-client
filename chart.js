@@ -5,9 +5,9 @@ class Chart {
 		height: 500,
 		margins: {
 			top: 15,
-			right: 15,
-			bottom: 40,
-			left: 60,
+			right: 40,
+			bottom: 100,
+			left: 100,
 		},
 	};
 	svg;
@@ -160,7 +160,8 @@ class Chart {
 				"transform",
 				`translate(${this.dimensions.margins.left}, ${this.dimensions.margins.top})`
 			)
-			.call(yAxisGenerator);
+			.call(yAxisGenerator)
+			.attr("class", "text-2xl md:text-lg lg:text-xs");
 		this.svg
 			.append("g")
 			.attr(
@@ -169,7 +170,14 @@ class Chart {
 					this.dimensions.boundedHeight + this.dimensions.margins.top
 				})`
 			)
-			.call(xAxisGenerator);
+			.call(xAxisGenerator)
+			.selectAll("text")
+			.attr("class", "text-2xl md:text-lg lg:text-xs")
+			.attr("y", 10)
+			.attr("x", 10)
+			.attr("dy", ".35em")
+			.attr("transform", "rotate(45)")
+			.style("text-anchor", "start");
 	}
 
 	drawLine() {
@@ -290,9 +298,13 @@ class Chart {
 				.node()
 				.addEventListener("click", () => {
 					this._options[`${group}Buttons`] = !this._options[`${group}Buttons`];
-					d3.select(`#${group}BtnGroup`).style("display", () =>
-						this._options[`${group}Buttons`] ? "block" : "none"
-					);
+					const btn = d3.select(`#${group}BtnGroup`).node();
+					if (this._options[`${group}Buttons`]) {
+						btn.classList.add("hidden");
+						btn.classList.remove("md:block");
+					} else {
+						btn.classList.remove("hidden");
+					}
 				});
 		}
 	}

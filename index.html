@@ -26,15 +26,50 @@
 					class="text-lg font-bold border-b py-2 uppercase tracking-wider cursor-pointer"
 				>
 					Metrics
+					<span class="md:hidden float-right mt-1">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							height="20"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
+						</svg>
+					</span>
 				</h3>
-				<div id="metricsBtnGroup"></div>
+				<div id="metricsBtnGroup" class="hidden md:block"></div>
 				<h3
 					id="events-title"
 					class="text-lg font-bold border-b py-2 mt-6 uppercase tracking-wider cursor-pointer"
 				>
 					Events
+					<span class="md:hidden float-right mt-1">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							height="20"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
+						</svg>
+					</span>
 				</h3>
-				<div id="eventsBtnGroup" class="border-b lg:border-b-0"></div>
+				<div
+					id="eventsBtnGroup"
+					class="border-b lg:border-b-0 hidden md:block"
+				></div>
 			</aside>
 			<section class="text-center lg:col-span-4 justify-center">
 				<h2
@@ -60,9 +95,9 @@
 			integrity="sha512-ToehgZGJmTS39fU8sfP9/f0h2Zo6OeXXKgpdEgzqUtPfE5By1K/ZkD8Jtp5PlfdaWfGVx+Jw5j10h63wSwM1HA=="
 			crossorigin="anonymous"
 		></script>
+		<script src="data.js"></script>
 		<script src="api.js"></script>
 		<script src="utils.js"></script>
-		<script src="config.js"></script>
 		<script src="chart.js"></script>
 		<script src="app.js"></script>
 		<script src="index.js"></script>
