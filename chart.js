@@ -7,7 +7,7 @@ class Chart {
 			top: 15,
 			right: 40,
 			bottom: 100,
-			left: 100,
+			left: 112,
 		},
 	};
 	svg;
@@ -155,13 +155,12 @@ class Chart {
 		const xAxisGenerator = d3.axisBottom(this.xScale);
 		this.svg
 			.append("g")
-			.attr("class", "y-axis")
+			.attr("class", "y-axis text-2xl md:text-lg lg:text-xs")
 			.attr(
 				"transform",
 				`translate(${this.dimensions.margins.left}, ${this.dimensions.margins.top})`
 			)
-			.call(yAxisGenerator)
-			.attr("class", "text-2xl md:text-lg lg:text-xs");
+			.call(yAxisGenerator);
 		this.svg
 			.append("g")
 			.attr(
@@ -182,10 +181,11 @@ class Chart {
 
 	drawLine() {
 		// Shadow line
+		const d = getForecast(3, this.averageData);
 		this.bounds
 			.append("path")
 			.attr("class", "line-stroke")
-			.attr("d", this.lineGenerator(this.averageData))
+			.attr("d", this.lineGenerator(d))
 			.attr("fill", "none")
 			.attr("stroke", "#1A212E")
 			.attr("stroke-width", 5);
@@ -194,7 +194,7 @@ class Chart {
 		this.bounds
 			.append("path")
 			.attr("class", "line-data")
-			.attr("d", this.lineGenerator(this.averageData))
+			.attr("d", this.lineGenerator(d))
 			.attr("fill", "none")
 			.attr("stroke", "#F472B6")
 			.attr("stroke-width", 3);
@@ -246,14 +246,9 @@ class Chart {
 
 	updateLine() {
 		const svg = d3.select("body").transition();
-		svg
-			.select(".line-stroke")
-			.duration(750)
-			.attr("d", this.lineGenerator(this.averageData));
-		svg
-			.select(".line-data")
-			.duration(750)
-			.attr("d", this.lineGenerator(this.averageData));
+		const d = getForecast(3, this.averageData);
+		svg.select(".line-stroke").duration(750).attr("d", this.lineGenerator(d));
+		svg.select(".line-data").duration(750).attr("d", this.lineGenerator(d));
 	}
 
 	drawEvents() {

@@ -63,6 +63,14 @@ const events = [
 		start: "2020-11-05",
 		end: "2020-12-04",
 	},
+	{
+		id: "firstVaccineJab",
+		label: "First Vaccine Jab",
+		hexColor: "#60A5FA",
+		twColor: "bg-blue-400",
+		start: "2020-12-08",
+		end: "2020-12-09",
+	},
 ];
 
 const eventsAccessor = (id) => {
