@@ -9,6 +9,4 @@ let chart;
 	chart = new Chart(initialMetric, dataset);
 })();
 
-// todo: Chart tooltips
-// todo: Change location - national, regional etc...
-// todo: Fix bars on top
+// todo: Select location - national, regional etc...

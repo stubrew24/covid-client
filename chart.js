@@ -74,17 +74,11 @@ class Chart {
 
 	set metric(metric) {
 		this._metric = metric.id;
-		console.log(this.dataset.length);
 		this.title = metric.title;
 		this.createScales();
 		this.updateYAxis();
 		this.updateLine();
 		this.updateBars();
-	}
-
-	set bars(value) {
-		this._options.bars = value;
-		this.drawBars();
 	}
 
 	set events({ key, value }) {
@@ -96,12 +90,11 @@ class Chart {
 		this.createScales();
 		this.drawAxes();
 		this.drawEvents();
-		this.drawLine();
 		this.drawBars();
+		this.drawLine();
 		this.barsToggle();
 		this.toggleEvents();
 		this.toggleMetricsButtons();
-		// this.tooltip();
 	}
 
 	drawCanvas() {
@@ -202,27 +195,23 @@ class Chart {
 	}
 
 	drawBars() {
-		if (this._options.bars) {
-			this.bounds
-				.selectAll(".bar")
-				.data(this.dataset)
-				.enter()
-				.append("rect")
-				.attr("class", "bar")
-				.attr("x", (d) => this.xScale(this.xAccessor(d)))
-				.attr("width", this.dimensions.boundedWidth / this.dataset.length)
-				.attr("y", (d) => this.yScale(this.yAccessor(d)))
-				.attr(
-					"height",
-					(d) => this.dimensions.boundedHeight - this.yScale(this.yAccessor(d))
-				)
-				.style("fill", "#6EE7B7")
-				.style("opacity", "0.4")
-				.attr("stroke-width", "0.5")
-				.attr("stroke", "#1F2937");
-		} else {
-			this.bounds.selectAll(".bar").remove();
-		}
+		this.bounds
+			.selectAll(".bar")
+			.data(this.dataset)
+			.enter()
+			.append("rect")
+			.attr("class", "bar")
+			.attr("x", (d) => this.xScale(this.xAccessor(d)))
+			.attr("width", this.dimensions.boundedWidth / this.dataset.length)
+			.attr("y", (d) => this.yScale(this.yAccessor(d)))
+			.attr(
+				"height",
+				(d) => this.dimensions.boundedHeight - this.yScale(this.yAccessor(d))
+			)
+			.style("fill", "#6EE7B7")
+			.attr("stroke-width", "0.5")
+			.attr("stroke", "#1F2937")
+			.style("opacity", "0");
 	}
 
 	updateBars() {
@@ -272,7 +261,6 @@ class Chart {
 	toggleEvents() {
 		Object.keys(this._events).forEach((id) => {
 			const event = this._events[id];
-			console.log(event);
 			d3.selectAll(`.${id}-highlight`)
 				.transition()
 				.duration(150)
@@ -284,7 +272,14 @@ class Chart {
 		d3.select("#toggleBars")
 			.node()
 			.addEventListener("click", (e) => {
-				chart.bars = e.target.checked;
+				this._options.bars = e.target.checked;
+				const bars = d3.selectAll(".bar");
+
+				if (this._options.bars) {
+					bars.style("opacity", "0.4");
+				} else {
+					bars.style("opacity", "0");
+				}
 			});
 	}
 
@@ -304,52 +299,4 @@ class Chart {
 				});
 		}
 	}
-
-	// tooltip() {
-	// 	const listeningRect = this.bounds
-	// 		.append("rect")
-	// 		.attr("class", "listening-rect")
-	// 		.attr("width", this.dimensions.boundedWidth)
-	// 		.attr("height", this.dimensions.boundedHeight)
-	// 		.attr("fill", "transparent")
-	// 		.on("mousemove", onMouseMove.bind(this))
-	// 		.on("mouseleave", onMouseLeave);
-
-	// 	const tooltip = d3.select("#tooltip");
-
-	// 	function onMouseMove(e) {
-	// 		const m = this.svg.node().getScreenCTM();
-	// 		let p = this.svg.node().createSVGPoint();
-
-	// 		p.x = e.clientX;
-	// 		p.y = e.clientY;
-
-	// 		p = p.matrixTransform(m.inverse());
-
-	// 		const hoveredDate = this.xScale.invert(
-	// 			p.x - this.dimensions.margins.left
-	// 		);
-
-	// 		const getDistanceFromHoveredDate = (d) =>
-	// 			Math.abs(this.xAccessor(d) - hoveredDate);
-
-	// 		const closestIndex = d3.scan(
-	// 			this.dataset,
-	// 			(a, b) => getDistanceFromHoveredDate(a) - getDistanceFromHoveredDate(b)
-	// 		);
-
-	// 		const closestDataPoint = this.dataset[closestIndex];
-
-	// 		const closestXValue = this.xAccessor(closestDataPoint);
-	// 		const closestYValue = this.yAccessor(closestDataPoint);
-
-	// 		const formatDate = d3.timeFormat("%d %b, %Y");
-	// 		tooltip.select("#date").text(formatDate(closestXValue));
-	// 		tooltip.select("#value").text(closestYValue);
-
-	// 		console.log(e.clientY, e.clientX);
-	// 		tooltip.attr("x1", e.clientX).attr("y1", e.clientY);
-	// 	}
-	// 	function onMouseLeave() {}
-	// }
 }
