@@ -101,6 +101,7 @@ class Chart {
 		this.barsToggle();
 		this.toggleEvents();
 		this.toggleMetricsButtons();
+		// this.tooltip();
 	}
 
 	drawCanvas() {
@@ -303,4 +304,52 @@ class Chart {
 				});
 		}
 	}
+
+	// tooltip() {
+	// 	const listeningRect = this.bounds
+	// 		.append("rect")
+	// 		.attr("class", "listening-rect")
+	// 		.attr("width", this.dimensions.boundedWidth)
+	// 		.attr("height", this.dimensions.boundedHeight)
+	// 		.attr("fill", "transparent")
+	// 		.on("mousemove", onMouseMove.bind(this))
+	// 		.on("mouseleave", onMouseLeave);
+
+	// 	const tooltip = d3.select("#tooltip");
+
+	// 	function onMouseMove(e) {
+	// 		const m = this.svg.node().getScreenCTM();
+	// 		let p = this.svg.node().createSVGPoint();
+
+	// 		p.x = e.clientX;
+	// 		p.y = e.clientY;
+
+	// 		p = p.matrixTransform(m.inverse());
+
+	// 		const hoveredDate = this.xScale.invert(
+	// 			p.x - this.dimensions.margins.left
+	// 		);
+
+	// 		const getDistanceFromHoveredDate = (d) =>
+	// 			Math.abs(this.xAccessor(d) - hoveredDate);
+
+	// 		const closestIndex = d3.scan(
+	// 			this.dataset,
+	// 			(a, b) => getDistanceFromHoveredDate(a) - getDistanceFromHoveredDate(b)
+	// 		);
+
+	// 		const closestDataPoint = this.dataset[closestIndex];
+
+	// 		const closestXValue = this.xAccessor(closestDataPoint);
+	// 		const closestYValue = this.yAccessor(closestDataPoint);
+
+	// 		const formatDate = d3.timeFormat("%d %b, %Y");
+	// 		tooltip.select("#date").text(formatDate(closestXValue));
+	// 		tooltip.select("#value").text(closestYValue);
+
+	// 		console.log(e.clientY, e.clientX);
+	// 		tooltip.attr("x1", e.clientX).attr("y1", e.clientY);
+	// 	}
+	// 	function onMouseLeave() {}
+	// }
 }

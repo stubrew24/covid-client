@@ -9,8 +9,6 @@ let chart;
 	chart = new Chart(initialMetric, dataset);
 })();
 
-// todo: Fix mobile layout jumping (refactor menu?)
 // todo: Chart tooltips
 // todo: Change location - national, regional etc...
-// todo: Check performance of bar chart - grouping?
 // todo: Fix bars on top
